@@ -79,18 +79,14 @@ class MusicModel extends HiveObject {
     required this.isFavorite,
   });
 
-  factory MusicModel.fromJson({
-    required Map<dynamic, dynamic> json,
-    required bool isFavorite,
-  }) {
+  factory MusicModel.fromJson(
+      {required Map<dynamic, dynamic> json,
+      required bool isFavorite,
+      required List<dynamic> images}) {
     return MusicModel(
       musicName: json['track'] != null ? json['track']['name'] : 'undefined',
       duration: json['track'] != null ? json['track']['duration'] : 'undefined',
-      images: json['track'] != null
-          ? json['track']['album'] == null
-              ? []
-              : json['track']['album']['image']
-          : [],
+      images: images,
       isFavorite: isFavorite,
     );
   }

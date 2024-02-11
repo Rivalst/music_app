@@ -136,10 +136,16 @@ class MusicAuthorDataService extends ApiFetcher {
         return null;
       }
 
+      final albumImages = body['album']['image'];
+
       for (final track in tracks['track']) {
         final trackName = track['name'];
 
-        final trackInfo = await _getTrackInfo(artist, trackName);
+        final trackInfo = await _getTrackInfo(
+          artist,
+          trackName,
+          albumImages,
+        );
         music.add(trackInfo);
       }
       return music;
@@ -153,6 +159,7 @@ class MusicAuthorDataService extends ApiFetcher {
   Future<MusicModel> _getTrackInfo(
     String artist,
     String trackName,
+    List<dynamic> albumImages,
   ) async {
     const method = 'track.getInfo';
 
@@ -166,7 +173,11 @@ class MusicAuthorDataService extends ApiFetcher {
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body) as Map<dynamic, dynamic>;
 
-      final music = MusicModel.fromJson(json: body, isFavorite: false);
+      final music = MusicModel.fromJson(
+        json: body,
+        isFavorite: false,
+        images: albumImages,
+      );
       return music;
     } else {
       throw Exception(
