@@ -3,7 +3,7 @@ part of 'bloc.dart';
 // Represents the state of artist information
 final class InfoState extends Equatable {
   final Load load;
-  final List<MusicModel> allMusic;
+  final List<Map<AlbumModel, List<MusicModel>>> allMusic;
   final String errorMessage;
 
   const InfoState({
@@ -14,7 +14,7 @@ final class InfoState extends Equatable {
 
   InfoState copyWith({
     Load? load,
-    List<MusicModel>? allMusic,
+    List<Map<AlbumModel, List<MusicModel>>>? allMusic,
     String? errorMessage,
   }) {
     return InfoState(

@@ -5,6 +5,7 @@ const kMediumDividerHeight = 6.0;
 
 const kSmallPadding = 8.0;
 const kMediumPadding = 16.0;
+const kBigPadding = 24.0;
 
 const kSmallFontSize = 16.0;
 const kMediumFontSize = 20.0;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 import 'package:music_app/common/value.dart';
 import 'package:music_app/common/widgets.dart';
 import 'package:music_app/data/data.dart';
@@ -37,9 +36,9 @@ class _ArtistInfoState extends State<ArtistInfo> {
       ),
       child: BlocBuilder<InfoBloc, InfoState>(
         builder: (context, state) {
-          if (state.allMusic.isEmpty) {
+          if (state.allMusic.isEmpty && state.load != Load.error) {
             context.read<InfoBloc>().add(
-                  AllTrackLoaded(
+                  AllAlbumLoaded(
                     authorName: authorName,
                   ),
                 );
@@ -50,24 +49,11 @@ class _ArtistInfoState extends State<ArtistInfo> {
               backgroundColor: Colors.white,
               surfaceTintColor: Colors.grey,
             ),
-            body: Padding(
-              padding: const EdgeInsets.all(kMediumPadding),
-              child: ListView(
-                children: [
-                  Image.network(imageUrl),
-                  Center(
-                    child: Text(
-                      authorName,
-                      style: const TextStyle(fontSize: kLargeFontSize),
-                    ),
-                  ),
-                  _buildScreen(
-                    state,
-                    imageUrl,
-                    widget.author,
-                  )
-                ],
-              ),
+            body: _buildScreen(
+              state,
+              imageUrl,
+              widget.author,
+              context,
             ),
           );
         },
@@ -80,6 +66,7 @@ class _ArtistInfoState extends State<ArtistInfo> {
     InfoState state,
     String authorImageUrl,
     AuthorModel author,
+    BuildContext context,
   ) {
     return switch (state.load) {
       Load.loading => _buildLoading(),
@@ -88,7 +75,7 @@ class _ArtistInfoState extends State<ArtistInfo> {
           authorImageUrl,
           author,
         ),
-      Load.error => _buildError(author, state),
+      Load.error => _buildError(author, state, context),
     };
   }
 
@@ -98,6 +85,7 @@ class _ArtistInfoState extends State<ArtistInfo> {
       child: Padding(
         padding: EdgeInsets.all(kSmallPadding),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(),
             Padding(
@@ -116,16 +104,41 @@ class _ArtistInfoState extends State<ArtistInfo> {
     String authorImageUrl,
     AuthorModel author,
   ) {
-    return Column(
-      children: [
-        for (int i = 0; i < state.allMusic.length; i++)
-          TrackViewWidget(
-            index: i,
-            track: state.allMusic[i],
-            authorImageUrl: authorImageUrl,
-            author: author,
-          ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(kMediumPadding),
+      child: ListView.builder(
+        itemCount: state.allMusic.length,
+        itemBuilder: (BuildContext context, int index) {
+          final album = state.allMusic[index];
+          final albumInfo = album.keys.first;
+
+          final albumTracks = album.values.first;
+
+          final albumImages = albumInfo.images;
+          final largeImage = albumImages.firstWhere(
+            (image) => image['size'] == 'large',
+          );
+          final imageUrl = largeImage['#text'];
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(kBigPadding),
+                child: Image.network(imageUrl),
+              ),
+              AuthorSmallViewWidget(
+                imageUrl: authorImageUrl,
+                name: author.authorName,
+              ),
+              for (var i = 0; i < albumTracks.length; i++)
+                TrackInAlbumViewWidget(
+                  index: i,
+                  track: albumTracks[i],
+                  author: author,
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -133,16 +146,18 @@ class _ArtistInfoState extends State<ArtistInfo> {
   Widget _buildError(
     AuthorModel author,
     InfoState state,
+    BuildContext context,
   ) {
     return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             state.errorMessage,
             style: const TextStyle(fontSize: kMediumFontSize),
           ),
           TextButton(
-            onPressed: () => context.read<InfoBloc>().add(AllTrackLoaded(
+            onPressed: () => context.read<InfoBloc>().add(AllAlbumLoaded(
                   authorName: author.authorName,
                 )),
             child: const Text(

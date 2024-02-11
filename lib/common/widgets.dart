@@ -156,6 +156,97 @@ class TrackViewWidget extends StatelessWidget {
   }
 }
 
+/// Represents a widget for displaying details of a track for album view.
+/// Builds the UI for the TrackViewWidget with details of the track including index, name, duration, and favorite icon.
+/// Handles favorite button tap events using BlocBuilder<FavoritesBloc, FavoritesState> to add/remove track from favorites.
+class TrackInAlbumViewWidget extends StatelessWidget {
+  final int index;
+  final MusicModel track;
+  final AuthorModel author;
+
+  const TrackInAlbumViewWidget({
+    required this.index,
+    required this.track,
+    required this.author,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = context.millisecondsToMinutes(track);
+
+    return BlocBuilder<FavoritesBloc, FavoritesState>(
+      builder: (context, state) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: kBigPadding,
+          ),
+          child: Column(
+            children: [
+              FittedBox(
+                fit: BoxFit.fitWidth,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${index + 1}.',
+                      style: const TextStyle(fontSize: kSmallFontSize),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: kSmallPadding,
+                      ),
+                      child: Text(
+                        track.musicName,
+                        style: const TextStyle(
+                          fontSize: kMediumFontSize,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      duration,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: kMediumFontSize,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        state.isInFavorites(author, track)
+                            ? context.read<FavoritesBloc>().add(
+                                  TrackRemovedFromFavorite(
+                                    author: author,
+                                    track: track,
+                                  ),
+                                )
+                            : context.read<FavoritesBloc>().add(
+                                  TrackAddedToFavorite(
+                                    author: author,
+                                    track: track,
+                                  ),
+                                );
+                      },
+                      icon: state.isInFavorites(author, track)
+                          ? const Icon(
+                              Icons.favorite,
+                              color: Colors.red,
+                            )
+                          : const Icon(
+                              Icons.favorite_outline,
+                            ),
+                    )
+                  ],
+                ),
+              ),
+              const Divider(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Represents a widget for displaying an image with customizable size
 /// Initializes the ImageFactory widget with required parameters: imageUrl, weight, and height
 /// Factory constructor for creating a small-sized image widget
@@ -222,7 +313,7 @@ class ImageFactory extends StatelessWidget {
 }
 
 /// Represents a widget for the bottom bar at the bottom of the screen
-/// Builds the UI for the SelectedScreen widget using 
+/// Builds the UI for the SelectedScreen widget using
 /// AnimatedSwitcher to switch between home and favorites screens based on the selected screen
 class BottomBar extends StatelessWidget {
   const BottomBar({super.key});

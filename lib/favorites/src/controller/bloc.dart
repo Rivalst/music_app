@@ -80,7 +80,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
 
     final favorites = state.favorites;
     final author = favorites.firstWhere(
-      (element) => element.containsKey(event.author),
+      (element) => element.keys.first.authorName == event.author.authorName,
     );
     final tracks = author.values.first;
 
@@ -122,11 +122,12 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
       ),
     );
 
-    var favorites = state.favorites;
+    var favorites =
+        List<Map<AuthorModel, List<MusicModel>>>.from(state.favorites);
     late final Map<dynamic, dynamic> author;
 
     if (favorites.isEmpty) {
-      trackDataService.setData(event.author, event.track);
+      await trackDataService.setData(event.author, event.track);
 
       favorites.add({
         event.author: [event.track]
@@ -157,12 +158,12 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
     }
 
     final isAuthor = favorites.any(
-      (element) => element.containsKey(event.author),
+      (element) => element.keys.first.authorName == event.author.authorName,
     );
 
     if (isAuthor) {
       author = favorites.firstWhere(
-        (element) => element.containsKey(event.author),
+        (element) => element.keys.first.authorName == event.author.authorName,
       );
     } else {
       trackDataService.setData(event.author, event.track);
