@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 part 'model.g.dart';
@@ -106,6 +107,38 @@ class MusicModel extends HiveObject {
       duration: duration ?? this.duration,
       images: images ?? this.images,
       isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
+}
+
+class AlbumModel {
+  final String albumName;
+  final List<dynamic> images;
+  final String authorName;
+
+  AlbumModel({
+    required this.albumName,
+    required this.authorName,
+    required this.images,
+  });
+
+  factory AlbumModel.fromJson({required Map<dynamic, dynamic> json}) {
+    return AlbumModel(
+      albumName: json['name'] ?? 'undefined',
+      authorName: json['artist']['name'] ?? 'undefined',
+      images: json['image'],
+    );
+  }
+
+  AlbumModel copyWith({
+    String? albumName,
+    String? authorName,
+    List<dynamic>? images,
+  }) {
+    return AlbumModel(
+      albumName: albumName ?? this.albumName,
+      authorName: authorName ?? this.authorName,
+      images: images ?? this.images,
     );
   }
 }
