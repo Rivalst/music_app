@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:music_app/artist_info/src/screen.dart';
 import 'package:music_app/common/value.dart';
 import 'package:music_app/common/widgets.dart';
+import 'package:music_app/favorites/favorites.dart';
 
 import 'controller/bloc.dart';
 
@@ -22,9 +23,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
         // load authors
-        if (state.allAuthor.isEmpty) {
+        if (state.allAuthor.isEmpty && state.load != Load.error) {
           context.read<HomeBloc>().add(
                 AllAuthorLoaded(),
+              );
+        }
+
+        final favoritesBloc = context.read<FavoritesBloc>();
+        if (favoritesBloc.state.favorites.isEmpty && favoritesBloc.state.load != Load.error) {
+          context.read<FavoritesBloc>().add(
+                FavoritesLoaded(),
               );
         }
 
@@ -71,10 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
           final author = state.allAuthor[index];
           final authorName = author.authorName;
           final authorImages = author.images;
-          final smallImage = authorImages.firstWhere(
+          final largeImage = authorImages.firstWhere(
             (image) => image['size'] == 'large',
           );
-          final imageUrl = smallImage['#text'];
+          final imageUrl = largeImage['#text'];
 
           return GestureDetector(
             onTap: () {
@@ -101,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildError(HomeState state) {
     return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             state.errorMessage,

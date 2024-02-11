@@ -10,7 +10,7 @@ part 'state.dart';
 
 // Represents the business logic component (Bloc) for managing state related to artist information
 // Initializes the InfoBloc with MusicAuthorDataService and initial state
-// Handles the AllTrackLoaded event by loading all tracks for the specified author asynchronously
+// Handles the AllAlbumLoaded event by loading all tracks for the specified author asynchronously
 class InfoBloc extends Bloc<InfoEvent, InfoState> {
   final MusicAuthorDataService musicAuthorDataService;
 
@@ -22,11 +22,11 @@ class InfoBloc extends Bloc<InfoEvent, InfoState> {
             errorMessage: '',
           ),
         ) {
-    on<AllTrackLoaded>(_allTrackLoad);
+    on<AllAlbumLoaded>(_allTrackLoad);
   }
 
   Future<void> _allTrackLoad(
-    AllTrackLoaded event,
+    AllAlbumLoaded event,
     Emitter<InfoState> emit,
   ) async {
     try {

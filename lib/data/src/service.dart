@@ -14,7 +14,7 @@ abstract class ApiFetcher {
   /// Retrieves music data for a specific artist asynchronously
   /// Takes artist name as input parameter
   /// Returns a Future containing a list of MusicModel
-  Future<List<MusicModel>> getMusicData(String artist);
+  Future<List<Map<AlbumModel, List<MusicModel>>>> getMusicData(String artist);
 }
 
 /// Represents an abstract class for local data service operations
@@ -29,12 +29,14 @@ abstract class LocalDataService {
     AuthorModel author,
     MusicModel track,
   );
+
   ///Updates existing data in the local storage asynchronously
   /// Takes an AuthorModel and a MusicModel as input parameters
   Future<void> updateData(
     AuthorModel author,
     MusicModel track,
   );
+
   /// Deletes data from the local storage asynchronously
   /// Takes an AuthorModel and an optional MusicModel as input parameters
   Future<void> deleteData(
@@ -70,9 +72,11 @@ class MusicAuthorDataService extends ApiFetcher {
   }
 
   @override
-  Future<List<MusicModel>> getMusicData(String artist) async {
-    const method = 'artist.gettoptracks';
-    const limit = 30;
+  Future<List<Map<AlbumModel, List<MusicModel>>>> getMusicData(
+    String artist,
+  ) async {
+    const method = "artist.gettopalbums";
+    const limit = 5;
 
     final formattedArtist = artist.toLowerCase().replaceAll(' ', '+');
 
@@ -83,17 +87,62 @@ class MusicAuthorDataService extends ApiFetcher {
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body) as Map<dynamic, dynamic>;
-      final List<MusicModel> allMusic = [];
+      final List<Map<AlbumModel, List<MusicModel>>> allMusic = [];
 
-      for (final music in body['toptracks']['track']) {
-        final trackName = music['name'];
-        final track = await _getTrackInfo(
+      for (final album in body['topalbums']['album']) {
+        final albumName = album['name'];
+        final albumsTrackInfo = await _getAlbumInfo(
           formattedArtist,
-          trackName,
+          albumName,
         );
-        allMusic.add(track);
+
+        final albumModel = AlbumModel.fromJson(json: album);
+        if (albumsTrackInfo != null) {
+          allMusic.add({albumModel: albumsTrackInfo});
+        }
       }
       return allMusic;
+    } else {
+      throw Exception(
+        'Bad response. Response status code: ${response.statusCode}, response body: ${response.body}',
+      );
+    }
+  }
+
+  Future<List<MusicModel>?> _getAlbumInfo(
+    String artist,
+    String albumName,
+  ) async {
+    const method = 'album.getinfo';
+
+    final formattedAlbumName = albumName.replaceAll(' ', '+');
+
+    final response = await http.get(
+      Uri.parse(
+          "$_apiURL?method=$method&api_key=$_apiKey&artist=$artist&album=$formattedAlbumName&format=$_formatJson"),
+    );
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body) as Map<dynamic, dynamic>;
+      final music = <MusicModel>[];
+
+      final tracks = body['album']['tracks'];
+
+      if (tracks == null) {
+        return tracks;
+      }
+
+      if (tracks['track'] is Map<String, dynamic>) {
+        return null;
+      }
+
+      for (final track in tracks['track']) {
+        final trackName = track['name'];
+
+        final trackInfo = await _getTrackInfo(artist, trackName);
+        music.add(trackInfo);
+      }
+      return music;
     } else {
       throw Exception(
         'Bad response. Response status code: ${response.statusCode}, response body: ${response.body}',
@@ -138,6 +187,7 @@ class TrackDataService extends LocalDataService {
     MusicModel? track,
   ) async {
     final box = await Hive.openBox<Map<dynamic, dynamic>>(_boxName);
+    final value = box.values.toList();
 
     if (track == null) {
       await box.delete(author.authorName);
@@ -145,14 +195,18 @@ class TrackDataService extends LocalDataService {
       return;
     }
 
-    late List<MusicModel>? tracksByAuthor;
+    final authorIndex = value.indexWhere(
+        (element) => element.keys.first.authorName == author.authorName);
+
+    late List<dynamic>? tracksByAuthor;
     late int trackIndex;
 
-    if (box.containsKey(author.authorName)) {
-      final authors = box.get(author.authorName);
-      tracksByAuthor = authors?[author];
+    if (authorIndex != -1) {
+      final authorInfo = box.getAt(authorIndex);
+      tracksByAuthor = authorInfo?.values.first;
     } else {
       await box.close();
+
       return;
     }
 
@@ -167,6 +221,12 @@ class TrackDataService extends LocalDataService {
 
     if (trackIndex != -1) {
       tracksByAuthor.removeAt(trackIndex);
+      await box.putAt(
+        authorIndex,
+        {
+          author: tracksByAuthor,
+        },
+      );
     }
 
     if (tracksByAuthor.isEmpty) {
@@ -181,8 +241,6 @@ class TrackDataService extends LocalDataService {
     final box = await Hive.openBox<Map<dynamic, dynamic>>(_boxName);
 
     final authors = box.values.toList();
-
-    await box.close();
 
     return authors;
   }
@@ -226,7 +284,9 @@ class TrackDataService extends LocalDataService {
 
       await box.put(
         author.authorName,
-        {author: tracksByAuthor},
+        {
+          author: tracksByAuthor,
+        },
       );
     }
 

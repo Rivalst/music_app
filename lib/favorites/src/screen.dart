@@ -21,11 +21,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     return BlocBuilder<FavoritesBloc, FavoritesState>(
       builder: (context, state) {
-        if (state.favorites.isEmpty) {
-          context.read<FavoritesBloc>().add(
-                FavoritesLoaded(),
-              );
-        }
         return Scaffold(
           appBar: AppBar(
             title: const Text('Favorite'),
@@ -118,6 +113,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget _buildError() {
     return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text(
             'Cannot load favorites. Please try again or restart the app',

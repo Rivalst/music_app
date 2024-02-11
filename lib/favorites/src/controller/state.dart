@@ -30,12 +30,12 @@ final class FavoritesState extends Equatable {
     }
 
     final isAuthor = favorites.any(
-      (element) => element.containsKey(author),
+      (element) => element.keys.first.authorName == author.authorName,
     );
 
     if (isAuthor) {
       final authorInfo = favorites.firstWhere(
-        (element) => element.containsKey(author),
+        (element) => element.keys.first.authorName == author.authorName,
       );
       final tracks = authorInfo.values.first;
 
